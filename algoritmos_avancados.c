@@ -10,38 +10,110 @@
 #include <string.h>
 
 // ---------------------------
-// Estrutura da árvore binária
+// Estrutura da árvore binária de salas
+// Cada sala tem:
+// - nome
+// - pista (se houver)
+// - ponteiros para esquerda e direita
 // ---------------------------
 typedef struct Sala {
     char nome[50];
+    char pista[50]; // pista encontrada nesta sala (string simples)
     struct Sala *esquerda;
     struct Sala *direita;
 } Sala;
 
+// ---------------------------
+// Estrutura da árvore de busca (BST) para pistas
+// Cada nodo guarda:
+// - uma pista
+// - ponteiros para esquerda e direita
+// ---------------------------
+typedef struct NodoBST {
+    char pista[50];
+    struct NodoBST *esquerda;
+    struct NodoBST *direita;
+} NodoBST;
+
+// ---------------------------
 // Função para criar uma sala dinamicamente
-Sala* criarSala(const char* nome) {
+// Recebe nome e pista (se não houver pista, passa string vazia)
+// ---------------------------
+Sala* criarSala(const char* nome, const char* pista) {
     Sala* nova = (Sala*) malloc(sizeof(Sala));
     if (nova == NULL) {
         printf("Erro ao alocar memória!\n");
         exit(1);
     }
     strcpy(nova->nome, nome);
+    strcpy(nova->pista, pista);
     nova->esquerda = NULL;
     nova->direita = NULL;
     return nova;
 }
 
 // ---------------------------
-// Função de exploração
+// Funções da BST de pistas
 // ---------------------------
-void explorarSalas(Sala* atual) {
+
+// Inserção de uma pista na BST (ordem alfabética)
+NodoBST* inserirBST(NodoBST* raiz, const char* pista) {
+    if (raiz == NULL) {
+        NodoBST* novo = (NodoBST*) malloc(sizeof(NodoBST));
+        strcpy(novo->pista, pista);
+        novo->esquerda = novo->direita = NULL;
+        return novo;
+    }
+    if (strcmp(pista, raiz->pista) < 0) {
+        raiz->esquerda = inserirBST(raiz->esquerda, pista);
+    } else if (strcmp(pista, raiz->pista) > 0) {
+        raiz->direita = inserirBST(raiz->direita, pista);
+    }
+    // se for igual, não insere duplicado
+    return raiz;
+}
+
+// Percorre a BST em ordem (alfabética) e imprime as pistas
+void emOrdem(NodoBST* raiz) {
+    if (raiz != NULL) {
+        emOrdem(raiz->esquerda);
+        printf("- %s\n", raiz->pista);
+        emOrdem(raiz->direita);
+    }
+}
+
+// Busca uma pista específica na BST
+NodoBST* buscarBST(NodoBST* raiz, const char* pista) {
+    if (raiz == NULL) return NULL;
+    if (strcmp(pista, raiz->pista) == 0) return raiz;
+    if (strcmp(pista, raiz->pista) < 0)
+        return buscarBST(raiz->esquerda, pista);
+    else
+        return buscarBST(raiz->direita, pista);
+}
+
+// ---------------------------
+// Função de exploração da mansão
+// O jogador navega pela árvore binária de salas
+// Ao entrar em uma sala com pista, ela é inserida na BST
+// ---------------------------
+void explorarSalas(Sala* atual, NodoBST** pistas) {
     char opcao;
 
     while (atual != NULL) {
         printf("\nVocê está na sala: %s\n", atual->nome);
+
+        // Se a sala tiver pista, adiciona na BST
+        if (strlen(atual->pista) > 0) {
+            printf("Você encontrou uma pista: %s\n", atual->pista);
+            *pistas = inserirBST(*pistas, atual->pista);
+        }
+
+        // Menu de opções
         printf("Escolha:\n");
         printf("e - Ir para a esquerda\n");
         printf("d - Ir para a direita\n");
+        printf("p - Listar todas as pistas\n");
         printf("s - Sair da exploração\n");
         printf("Opção: ");
         scanf(" %c", &opcao);
@@ -63,6 +135,9 @@ void explorarSalas(Sala* atual) {
                 printf("\nFim do caminho à direita. Sala sem saída!\n");
                 break;
             }
+        } else if (opcao == 'p') {
+            printf("\nPistas coletadas (em ordem alfabética):\n");
+            emOrdem(*pistas);
         } else {
             printf("\nOpção inválida!\n");
         }
@@ -110,12 +185,12 @@ int main() {
     // - Em caso de colisão, use lista encadeada para tratar.
     // - Modularize com funções como inicializarHash(), buscarSuspeito(), listarAssociacoes().
 
-    // Construção estática da mansão
-    Sala* hall = criarSala("Hall de Entrada");
-    Sala* salaEstar = criarSala("Sala de Estar");
-    Sala* biblioteca = criarSala("Biblioteca");
-    Sala* cozinha = criarSala("Cozinha");
-    Sala* jardim = criarSala("Jardim");
+    // Construção estática da mansão (árvore binária de salas)
+    Sala* hall = criarSala("Hall de Entrada", "");
+    Sala* salaEstar = criarSala("Sala de Estar", "Chave dourada");
+    Sala* biblioteca = criarSala("Biblioteca", "Livro antigo");
+    Sala* cozinha = criarSala("Cozinha", "Copo quebrado");
+    Sala* jardim = criarSala("Jardim", "");
 
     // Ligações da árvore binária
     hall->esquerda = salaEstar;
@@ -123,8 +198,11 @@ int main() {
     salaEstar->esquerda = cozinha;
     salaEstar->direita = jardim;
 
+    // Árvore de pistas (BST) começa vazia
+    NodoBST* pistas = NULL;
+
     // Início da exploração
-    explorarSalas(hall);
+    explorarSalas(hall, &pistas);
 
     return 0;
 }
