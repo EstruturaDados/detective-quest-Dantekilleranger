@@ -5,6 +5,74 @@
 // Este código inicial serve como base para o desenvolvimento das estruturas de navegação, pistas e suspeitos.
 // Use as instruções de cada região para desenvolver o sistema completo com árvore binária, árvore de busca e tabela hash.
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// ---------------------------
+// Estrutura da árvore binária
+// ---------------------------
+typedef struct Sala {
+    char nome[50];
+    struct Sala *esquerda;
+    struct Sala *direita;
+} Sala;
+
+// Função para criar uma sala dinamicamente
+Sala* criarSala(const char* nome) {
+    Sala* nova = (Sala*) malloc(sizeof(Sala));
+    if (nova == NULL) {
+        printf("Erro ao alocar memória!\n");
+        exit(1);
+    }
+    strcpy(nova->nome, nome);
+    nova->esquerda = NULL;
+    nova->direita = NULL;
+    return nova;
+}
+
+// ---------------------------
+// Função de exploração
+// ---------------------------
+void explorarSalas(Sala* atual) {
+    char opcao;
+
+    while (atual != NULL) {
+        printf("\nVocê está na sala: %s\n", atual->nome);
+        printf("Escolha:\n");
+        printf("e - Ir para a esquerda\n");
+        printf("d - Ir para a direita\n");
+        printf("s - Sair da exploração\n");
+        printf("Opção: ");
+        scanf(" %c", &opcao);
+
+        if (opcao == 's') {
+            printf("\nVocê decidiu sair da mansão.\n");
+            break;
+        } else if (opcao == 'e') {
+            if (atual->esquerda != NULL) {
+                atual = atual->esquerda;
+            } else {
+                printf("\nFim do caminho à esquerda. Sala sem saída!\n");
+                break;
+            }
+        } else if (opcao == 'd') {
+            if (atual->direita != NULL) {
+                atual = atual->direita;
+            } else {
+                printf("\nFim do caminho à direita. Sala sem saída!\n");
+                break;
+            }
+        } else {
+            printf("\nOpção inválida!\n");
+        }
+    }
+}
+
+// ---------------------------
+// Programa principal
+// ---------------------------
+
 int main() {
 
     // 🌱 Nível Novato: Mapa da Mansão com Árvore Binária
@@ -41,6 +109,22 @@ int main() {
     // - Para hashing simples, pode usar soma dos valores ASCII do nome ou primeira letra.
     // - Em caso de colisão, use lista encadeada para tratar.
     // - Modularize com funções como inicializarHash(), buscarSuspeito(), listarAssociacoes().
+
+    // Construção estática da mansão
+    Sala* hall = criarSala("Hall de Entrada");
+    Sala* salaEstar = criarSala("Sala de Estar");
+    Sala* biblioteca = criarSala("Biblioteca");
+    Sala* cozinha = criarSala("Cozinha");
+    Sala* jardim = criarSala("Jardim");
+
+    // Ligações da árvore binária
+    hall->esquerda = salaEstar;
+    hall->direita = biblioteca;
+    salaEstar->esquerda = cozinha;
+    salaEstar->direita = jardim;
+
+    // Início da exploração
+    explorarSalas(hall);
 
     return 0;
 }
